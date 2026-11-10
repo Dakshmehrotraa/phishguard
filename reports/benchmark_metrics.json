@@ -1,0 +1,70 @@
+{
+  "task": "benchmark",
+  "trained_at": "2026-11-10T09:33:58",
+  "version": "1.0.0",
+  "dataset": "UCI Phishing Websites (#327)",
+  "rows": 11055,
+  "features": 30,
+  "balancing": "imblearn.SMOTE",
+  "selected_model": "Ensemble (RF + HGB, soft vote)",
+  "final_model_test_metrics": {
+    "accuracy": 0.9765,
+    "precision": 0.9803,
+    "recall": 0.9663,
+    "f1": 0.9733,
+    "roc_auc": 0.9977,
+    "false_positive_rate": 0.0154,
+    "confusion_matrix": {
+      "tn": 1212,
+      "fp": 19,
+      "fn": 33,
+      "tp": 947
+    }
+  },
+  "comparison": [
+    {
+      "model": "Ensemble (RF + HGB, soft vote)",
+      "val_f1": 0.9649,
+      "accuracy": 0.9756,
+      "precision": 0.9763,
+      "recall": 0.9684,
+      "f1": 0.9723,
+      "roc_auc": 0.9966,
+      "false_positive_rate": 0.0187,
+      "train_seconds": 4.9
+    },
+    {
+      "model": "HistGradientBoosting (XGBoost not installed)",
+      "val_f1": 0.9643,
+      "accuracy": 0.9769,
+      "precision": 0.9774,
+      "recall": 0.9704,
+      "f1": 0.9739,
+      "roc_auc": 0.9961,
+      "false_positive_rate": 0.0179,
+      "train_seconds": 4.5
+    },
+    {
+      "model": "Random Forest",
+      "val_f1": 0.957,
+      "accuracy": 0.9729,
+      "precision": 0.9762,
+      "recall": 0.9622,
+      "f1": 0.9692,
+      "roc_auc": 0.9958,
+      "false_positive_rate": 0.0187,
+      "train_seconds": 0.4
+    },
+    {
+      "model": "Logistic Regression",
+      "val_f1": 0.9172,
+      "accuracy": 0.9317,
+      "precision": 0.9313,
+      "recall": 0.9133,
+      "f1": 0.9222,
+      "roc_auc": 0.9784,
+      "false_positive_rate": 0.0536,
+      "train_seconds": 0.0
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+data/*
+!data/.gitkeep
+models/*.joblib
+phishguard.db
+.pytest_cache/
+.ipynb_checkpoints/
+run_log.txt
+.DS_Store
