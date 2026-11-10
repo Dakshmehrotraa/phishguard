@@ -1,0 +1,5 @@
+model,val_f1,accuracy,precision,recall,f1,roc_auc,false_positive_rate,train_seconds
+"Ensemble (LR + NB, soft vote)",0.617,0.8067,0.6112,0.6297,0.6203,0.8321,0.1341,6.1
+Multinomial Naive Bayes,0.6049,0.8018,0.6026,0.6158,0.6091,0.8255,0.1359,0.0
+Logistic Regression,0.5988,0.7906,0.5728,0.6494,0.6087,0.8253,0.1621,6.1
+Random Forest,0.5781,0.8183,0.6771,0.5265,0.5924,0.8158,0.084,4.6

@@ -1,0 +1,52 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "PhishGuard: 1. Setup (venv + install requirements)",
+      "type": "shell",
+      "command": "python3 -m venv .venv && ./.venv/bin/python -m pip install --upgrade pip && ./.venv/bin/python -m pip install -r requirements.txt",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "PhishGuard: 2. Train models",
+      "type": "shell",
+      "command": "./.venv/bin/python -m phishguard.train all",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "PhishGuard: 3. Run dashboard (Streamlit)",
+      "type": "shell",
+      "command": "./.venv/bin/python -m streamlit run app/streamlit_app.py",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "PhishGuard: Run API (FastAPI)",
+      "type": "shell",
+      "command": "./.venv/bin/python -m uvicorn api.main:app --reload",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "PhishGuard: Run tests",
+      "type": "shell",
+      "command": "./.venv/bin/python -m pytest -q",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "PhishGuard: Setup + train + dashboard (all steps)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "PhishGuard: 1. Setup (venv + install requirements)",
+        "PhishGuard: 2. Train models",
+        "PhishGuard: 3. Run dashboard (Streamlit)"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

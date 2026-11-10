@@ -1,0 +1,72 @@
+{
+  "task": "url",
+  "trained_at": "2026-11-10T09:33:30",
+  "version": "1.0.0",
+  "dataset": "PhiUSIIL (UCI #967)",
+  "rows": 171307,
+  "features": 17,
+  "input": "registered domain only (char 2-5 grams + domain features)",
+  "balancing": "imblearn.SMOTE",
+  "selected_model": "Ensemble (LR + NB, soft vote)",
+  "feedback_rows": 0,
+  "final_model_test_metrics": {
+    "accuracy": 0.8062,
+    "precision": 0.6083,
+    "recall": 0.6378,
+    "f1": 0.6227,
+    "roc_auc": 0.8344,
+    "false_positive_rate": 0.1375,
+    "confusion_matrix": {
+      "tn": 22141,
+      "fp": 3529,
+      "fn": 3112,
+      "tp": 5480
+    }
+  },
+  "comparison": [
+    {
+      "model": "Ensemble (LR + NB, soft vote)",
+      "val_f1": 0.617,
+      "accuracy": 0.8067,
+      "precision": 0.6112,
+      "recall": 0.6297,
+      "f1": 0.6203,
+      "roc_auc": 0.8321,
+      "false_positive_rate": 0.1341,
+      "train_seconds": 6.1
+    },
+    {
+      "model": "Multinomial Naive Bayes",
+      "val_f1": 0.6049,
+      "accuracy": 0.8018,
+      "precision": 0.6026,
+      "recall": 0.6158,
+      "f1": 0.6091,
+      "roc_auc": 0.8255,
+      "false_positive_rate": 0.1359,
+      "train_seconds": 0.0
+    },
+    {
+      "model": "Logistic Regression",
+      "val_f1": 0.5988,
+      "accuracy": 0.7906,
+      "precision": 0.5728,
+      "recall": 0.6494,
+      "f1": 0.6087,
+      "roc_auc": 0.8253,
+      "false_positive_rate": 0.1621,
+      "train_seconds": 6.1
+    },
+    {
+      "model": "Random Forest",
+      "val_f1": 0.5781,
+      "accuracy": 0.8183,
+      "precision": 0.6771,
+      "recall": 0.5265,
+      "f1": 0.5924,
+      "roc_auc": 0.8158,
+      "false_positive_rate": 0.084,
+      "train_seconds": 4.6
+    }
+  ]
+}

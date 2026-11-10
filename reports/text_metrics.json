@@ -1,0 +1,70 @@
+{
+  "task": "text",
+  "trained_at": "2026-11-10T09:33:44",
+  "version": "1.0.0",
+  "dataset": "UCI SMS Spam Collection",
+  "rows": 5574,
+  "balancing": "imblearn.SMOTE",
+  "selected_model": "Logistic Regression",
+  "feedback_rows": 0,
+  "final_model_test_metrics": {
+    "accuracy": 0.9919,
+    "precision": 0.993,
+    "recall": 0.9463,
+    "f1": 0.9691,
+    "roc_auc": 0.9974,
+    "false_positive_rate": 0.001,
+    "confusion_matrix": {
+      "tn": 965,
+      "fp": 1,
+      "fn": 8,
+      "tp": 141
+    }
+  },
+  "comparison": [
+    {
+      "model": "Logistic Regression",
+      "val_f1": 0.9614,
+      "accuracy": 0.9919,
+      "precision": 0.993,
+      "recall": 0.9463,
+      "f1": 0.9691,
+      "roc_auc": 0.9967,
+      "false_positive_rate": 0.001,
+      "train_seconds": 0.1
+    },
+    {
+      "model": "Ensemble (LR + RF, soft vote)",
+      "val_f1": 0.961,
+      "accuracy": 0.9919,
+      "precision": 0.993,
+      "recall": 0.9463,
+      "f1": 0.9691,
+      "roc_auc": 0.9962,
+      "false_positive_rate": 0.001,
+      "train_seconds": 0.6
+    },
+    {
+      "model": "Multinomial Naive Bayes",
+      "val_f1": 0.9306,
+      "accuracy": 0.9821,
+      "precision": 0.9272,
+      "recall": 0.9396,
+      "f1": 0.9333,
+      "roc_auc": 0.9911,
+      "false_positive_rate": 0.0114,
+      "train_seconds": 0.0
+    },
+    {
+      "model": "Random Forest",
+      "val_f1": 0.9304,
+      "accuracy": 0.9883,
+      "precision": 0.9789,
+      "recall": 0.9329,
+      "f1": 0.9553,
+      "roc_auc": 0.9921,
+      "false_positive_rate": 0.0031,
+      "train_seconds": 0.5
+    }
+  ]
+}

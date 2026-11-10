@@ -1,0 +1,11 @@
+# Train the models first (python -m phishguard.train all) so ./models is populated.
+services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+    volumes: ["./models:/app/models", "./reports:/app/reports", "./data:/app/data"]
+  ui:
+    build: .
+    command: ["streamlit", "run", "app/streamlit_app.py", "--server.address=0.0.0.0", "--server.port=8501"]
+    ports: ["8501:8501"]
+    volumes: ["./models:/app/models", "./reports:/app/reports", "./data:/app/data"]
