@@ -1,0 +1,35 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests
+        run: python -m pytest -q
+      - name: Check the committed models load with the pinned versions
+        run: |
+          python - <<'PY'
+          from phishguard.predictor import scan
+          r = scan(text="URGENT: your account is blocked, verify KYC at http://sbi-kyc-update.tk/login", explain=False)
+          assert r["verdict"] == "phishing", r
+          r = scan(text="are we still meeting for lunch at 1", explain=False)
+          assert r["verdict"] == "safe", r
+          print("committed models OK")
+          PY
