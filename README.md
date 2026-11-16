@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/Dakshmehrotraa/phishguard/actions/workflows/tests.yml/badge.svg)](https://github.com/Dakshmehrotraa/phishguard/actions/workflows/tests.yml)
 
-**Live demo: [phishguard-daksh.streamlit.app](https://phishguard-daksh.streamlit.app)** · Presentation: [`docs/AI_Scam_Phishing_Detection_Final.pptx`](docs/AI_Scam_Phishing_Detection_Final.pptx)
+**Live demo: [ai-phishing-detector-app.streamlit.app](https://ai-phishing-detector-app.streamlit.app)** · Presentation: [`docs/AI_Scam_Phishing_Detection_Final.pptx`](docs/AI_Scam_Phishing_Detection_Final.pptx)
 
 PhishGuard detects phishing URLs and scam SMS/email messages with machine learning. It returns a risk score, a verdict (safe / suspicious / phishing) and the reasons behind each verdict. A FastAPI backend and a Streamlit dashboard sit on top of the models, and user feedback flows into a retraining loop.
 
@@ -153,7 +153,7 @@ The tests train tiny models on the hand-made samples in `tests/fixtures/` inside
 
 ## Deployment
 
-The dashboard is deployed on Streamlit Community Cloud at **https://phishguard-daksh.streamlit.app**. It redeploys automatically on every push to `main`.
+The dashboard is deployed on Streamlit Community Cloud at **https://ai-phishing-detector-app.streamlit.app**. It redeploys automatically on every push to `main`.
 
 | Setting | Value |
 |---|---|
