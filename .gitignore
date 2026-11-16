@@ -4,7 +4,6 @@ __pycache__/
 venv/
 data/*
 !data/.gitkeep
-models/*.joblib
 phishguard.db
 .pytest_cache/
 .ipynb_checkpoints/

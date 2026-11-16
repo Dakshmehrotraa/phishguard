@@ -1,0 +1,10 @@
+# Dependencies for the hosted dashboard (Streamlit Community Cloud reads this file
+# because it sits next to app/streamlit_app.py). Versions are pinned to the ones the
+# committed models in models/ were trained with, so the saved models load exactly.
+# For local development and training use the root requirements.txt instead.
+streamlit==1.50.0
+scikit-learn==1.6.1
+numpy==2.0.2
+scipy==1.13.1
+pandas==2.3.3
+joblib==1.5.3
