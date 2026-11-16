@@ -14,7 +14,7 @@ PhishGuard detects phishing URLs and scam SMS/email messages with machine learni
  Features   registered domain → char 2-5     cleaning → TF-IDF (word 1-2 grams
             grams + 17 domain features      + character 3-5 grams)
             (TLD, keywords, entropy...)           │   links found in the text ──┐
-            + 11 heuristic rules on the           │                             │
+            + 12 heuristic rules on the           │                             │
             full URL (@, IP, redirects,           │                             │
             shorteners, brand/keywords in         │                             │
             subdomain, free hosting)              │                             │
@@ -121,7 +121,7 @@ Use the numbers from your own run. Don't copy figures from the papers in the lit
 
 ## Results
 
-These numbers come from training on a MacBook Air (Apple Silicon) with imbalanced-learn SMOTE. XGBoost could not load there because macOS lacks the `libomp` runtime, so scikit-learn's HistGradientBoosting stands in as the gradient-boosting model. After `brew install libomp`, rerun training to include XGBoost. All 21 tests pass on that machine.
+These numbers come from training on a MacBook Air (Apple Silicon) with imbalanced-learn SMOTE. XGBoost could not load there because macOS lacks the `libomp` runtime, so scikit-learn's HistGradientBoosting stands in as the gradient-boosting model. After `brew install libomp`, rerun training to include XGBoost. All 24 tests pass on that machine.
 
 | Task | Test data | Selected model (by validation F1) | Accuracy | Precision | Recall | F1 | ROC-AUC |
 |---|---|---|---|---|---|---|---|

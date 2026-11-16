@@ -33,3 +33,22 @@ def test_allowlist_trusts_known_domains_but_rules_still_run(trained):
     assert r["trusted_domain"] and r["verdict"] == "safe"
     r = scan_url("https://sites.google.com/view/sbi-kyc-verify-login")
     assert r["trusted_domain"] and r["rule_score"] > 0
+
+
+def test_trusted_sites_own_pages_are_not_flagged_by_keyword_rules():
+    for u in ["https://www.sbi.co.in/web/personal-banking", "https://netbanking.hdfcbank.com/netbanking/",
+              "https://www.icicibank.com/personal-banking/accounts"]:
+        assert evaluate(u)["score"] == 0, u
+
+
+def test_overlapping_keywords_are_counted_once():
+    # "bank" inside "banking" is one keyword, so this path has only one
+    assert evaluate("https://example.org/banking/")["score"] == 0
+
+
+def test_brand_page_on_free_hosting_platform():
+    r = evaluate("https://sites.google.com/view/icici-kyc-verify-login")
+    rules = {f["rule"] for f in r["fired"]}
+    assert {"free_hosting", "brand_on_free_hosting"} <= rules and r["score"] >= 0.7
+    r = evaluate("https://emerald-exch-0utlook.firebaseapp.com/")
+    assert "free_hosting" in {f["rule"] for f in r["fired"]}

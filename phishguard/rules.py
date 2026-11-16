@@ -7,6 +7,7 @@ from __future__ import annotations
 import re
 from urllib.parse import urlsplit
 
+from .allowlist import is_trusted
 from .url_features import SHORTENERS, SUSPICIOUS_WORDS, _is_ip, _normalise, split_host
 
 RULES = [
@@ -20,9 +21,10 @@ RULES = [
     ("brand_in_subdomain", 0.55, "Well-known brand name in a subdomain of an unrelated domain"),
     ("keywords_in_subdomain", 0.45, "Phishing keywords in the subdomain (login, secure, verify...)"),
     ("free_hosting", 0.35, "Site on a free hosting / app platform (common for throwaway phishing pages)"),
+    ("brand_on_free_hosting", 0.60, "Well-known brand name on a free hosting / app platform page"),
     ("many_subdomains", 0.35, "Unusually many subdomain levels"),
     ("http_with_credentials_words", 0.30, "Plain http (no encryption) on a login/verify page"),
-]
+]  # 12 rules
 _WEIGHT = {r[0]: r[1] for r in RULES}
 _DESC = {r[0]: r[2] for r in RULES}
 
@@ -38,6 +40,18 @@ FREE_HOSTS = {"firebaseapp.com", "web.app", "repl.co", "replit.app", "000webhost
               "sites.google.com", "ipfs.io", "dweb.link", "r2.dev", "surge.sh", "onrender.com"}
 
 
+def _keywords(s: str) -> set:
+    """Distinct phishing keywords in s; 'bank' is not counted again when 'banking' matched."""
+    found = {w for w in SUSPICIOUS_WORDS if w in s}
+    return {w for w in found if not any(w != o and w in o for o in found)}
+
+
+def _on_platform(host: str) -> bool:
+    """True for user-content pages on a free hosting / app platform (e.g. x.firebaseapp.com,
+    sites.google.com/view/x), where anyone can publish under the platform's domain."""
+    return host == "sites.google.com" or any(host.endswith("." + h) for h in FREE_HOSTS)
+
+
 def evaluate(url: str) -> dict:
     scheme, full = _normalise(str(url))
     try:
@@ -47,7 +61,12 @@ def evaluate(url: str) -> dict:
         parts, host = urlsplit("http://invalid"), ""
     path_q = (parts.path + "?" + parts.query).lower()
     subdomains, registered = split_host(host.removeprefix("www."))
-    kw_in_path = sum(w in path_q for w in SUSPICIOUS_WORDS)
+    platform = _on_platform(host)
+    # A trusted organisation's own site (sbi.co.in/web/personal-banking, netbanking.hdfcbank.com)
+    # naturally uses words like "bank" or "login"; keyword rules only apply to everyone else.
+    own_trusted_site = is_trusted(registered) and not platform
+    kw_in_path = 0 if own_trusted_site else len(_keywords(path_q))
+    kw_in_sub = 0 if own_trusted_site else len(_keywords(subdomains))
 
     fired = []
     if "@" in parts.netloc:
@@ -64,10 +83,12 @@ def evaluate(url: str) -> dict:
         fired.append("shortener")
     if subdomains and any(b in subdomains for b in BRANDS) and not any(b in registered for b in BRANDS):
         fired.append("brand_in_subdomain")
-    if subdomains and sum(w in subdomains for w in SUSPICIOUS_WORDS) >= 1:
+    if kw_in_sub >= 1:
         fired.append("keywords_in_subdomain")
-    if subdomains and registered in FREE_HOSTS:
+    if platform:
         fired.append("free_hosting")
+        if any(b in subdomains or b in path_q for b in BRANDS):
+            fired.append("brand_on_free_hosting")
     if subdomains.count(".") >= 2:
         fired.append("many_subdomains")
     if scheme == "http" and kw_in_path >= 1:
