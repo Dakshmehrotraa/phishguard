@@ -1,5 +1,9 @@
 # PhishGuard: AI-Based Scam and Phishing Detection System
 
+[![tests](https://github.com/Dakshmehrotraa/phishguard/actions/workflows/tests.yml/badge.svg)](https://github.com/Dakshmehrotraa/phishguard/actions/workflows/tests.yml)
+
+**Live demo: [phishguard-daksh.streamlit.app](https://phishguard-daksh.streamlit.app)** · Presentation: [`docs/AI_Scam_Phishing_Detection_Final.pptx`](docs/AI_Scam_Phishing_Detection_Final.pptx)
+
 PhishGuard detects phishing URLs and scam SMS/email messages with machine learning. It returns a risk score, a verdict (safe / suspicious / phishing) and the reasons behind each verdict. A FastAPI backend and a Streamlit dashboard sit on top of the models, and user feedback flows into a retraining loop.
 
 ## Architecture
@@ -146,6 +150,23 @@ pytest -q
 ```
 
 The tests train tiny models on the hand-made samples in `tests/fixtures/` inside a temp folder. They check that the code works and say nothing about accuracy.
+
+## Deployment
+
+The dashboard is deployed on Streamlit Community Cloud at **https://phishguard-daksh.streamlit.app**. It redeploys automatically on every push to `main`.
+
+| Setting | Value |
+|---|---|
+| Repository / branch | `Dakshmehrotraa/phishguard`, `main` |
+| Main file | `app/streamlit_app.py` |
+| Python | 3.12 (the pinned numpy 2.0.2 has no wheels for 3.13+) |
+| Dependencies | `app/requirements.txt` (used because it sits next to the main file) |
+
+The hosted app loads the trained models committed in `models/`, so it never trains. Saved scikit-learn models only load reliably on the version that trained them (a 1.6.1 model fails on 1.9), so `app/requirements.txt` pins the exact versions used for training. If you retrain with different library versions, update those pins in the same commit. A free-tier app goes to sleep after a period without visitors; the first visit wakes it in under a minute.
+
+**Continuous integration.** `.github/workflows/tests.yml` runs the test suite on Python 3.9 and 3.12 on every push and pull request, and checks that the committed models load and give the expected verdicts.
+
+**Deploying the API.** The FastAPI service runs from the `Dockerfile` on any Docker host (for example Render, Railway or a VM): `docker build -t phishguard . && docker run -p 8000:8000 phishguard`.
 
 ## Docker
 
