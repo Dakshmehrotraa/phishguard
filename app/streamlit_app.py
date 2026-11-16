@@ -1,6 +1,9 @@
 """PhishGuard demo dashboard.
 
     streamlit run app/streamlit_app.py
+
+Test links: add ?url=<link> or ?msg=<message text> (URL-encoded) to the app's address
+and the scan runs as soon as the page opens.
 """
 import json
 import sys
@@ -67,6 +70,55 @@ def feedback_buttons(kind, text, key):
         st.success("Saved. It will be used in the next retraining run.")
 
 
+def show_message_result(result, text, key):
+    verdict_banner(result)
+    st.write(f"**Triggered by:** {result['triggered_by']}")
+    for i, comp in enumerate(result["components"]):
+        title = "Message content" if comp["type"] == "text" else f"Link: {comp['input']}"
+        with st.expander(f"{ICONS[comp['verdict']]} {title} - {comp['probability']:.1%} ({comp['model']})", expanded=i == 0):
+            show_reasons(comp)
+    st.divider()
+    st.write("Was this verdict wrong?")
+    feedback_buttons("text", text, key)
+
+
+def show_url_result(result, url, key):
+    verdict_banner(result)
+    st.caption(f"Model: {result['model']}")
+    show_reasons(result)
+    st.divider()
+    st.write("Was this verdict wrong?")
+    feedback_buttons("url", url, key)
+
+
+def scan_from_link():
+    """Shareable test links: ?url=<link> or ?msg=<message text> scans on page load."""
+    link_url, link_msg = st.query_params.get("url"), st.query_params.get("msg")
+    if not (link_url or link_msg):
+        return
+    with st.container(border=True):
+        st.subheader("🔎 Scan from link")
+        logged = st.session_state.setdefault("logged_links", set())
+        if link_msg:
+            st.write("**Message:**")
+            st.info(link_msg)
+            result = predictor.scan(text=link_msg)
+            if ("msg", link_msg) not in logged:
+                store.log_scan("text", link_msg, result["probability"], result["verdict"])
+                logged.add(("msg", link_msg))
+            show_message_result(result, link_msg, "link_msg")
+        else:
+            st.write(f"**URL:** `{link_url}`")
+            result = predictor.scan_url(link_url)
+            if ("url", link_url) not in logged:
+                store.log_scan("url", link_url, result["probability"], result["verdict"])
+                logged.add(("url", link_url))
+            show_url_result(result, link_url, "link_url")
+        if st.button("Clear and scan something else"):
+            st.query_params.clear()
+            st.rerun()
+
+
 url_b, text_b = predictor.load_models()
 st.title("🛡️ PhishGuard")
 st.caption("AI-based scam and phishing detection for URLs, SMS and email")
@@ -74,6 +126,8 @@ if url_b is None or text_b is None:
     st.error("Models are not trained yet. Run `python scripts/download_data.py` and then "
              "`python -m phishguard.train all`, and reload this page.")
     st.stop()
+
+scan_from_link()
 
 tab_msg, tab_url, tab_perf, tab_hist = st.tabs(["📩 Scan message", "🔗 Scan URL", "📊 Model performance", "🕑 History"])
 
@@ -83,27 +137,14 @@ with tab_msg:
     if st.button("Scan message", type="primary") and text.strip():
         result = predictor.scan(text=text)
         store.log_scan("text", text, result["probability"], result["verdict"])
-        verdict_banner(result)
-        st.write(f"**Triggered by:** {result['triggered_by']}")
-        for i, comp in enumerate(result["components"]):
-            title = "Message content" if comp["type"] == "text" else f"Link: {comp['input']}"
-            with st.expander(f"{ICONS[comp['verdict']]} {title} - {comp['probability']:.1%} ({comp['model']})", expanded=i == 0):
-                show_reasons(comp)
-        st.divider()
-        st.write("Was this verdict wrong?")
-        feedback_buttons("text", text, "msg")
+        show_message_result(result, text, "msg")
 
 with tab_url:
     url = st.text_input("URL to check", placeholder="http://secure-paypal-login.xyz/verify")
     if st.button("Scan URL", type="primary") and url.strip():
         result = predictor.scan_url(url)
         store.log_scan("url", url, result["probability"], result["verdict"])
-        verdict_banner(result)
-        st.caption(f"Model: {result['model']}")
-        show_reasons(result)
-        st.divider()
-        st.write("Was this verdict wrong?")
-        feedback_buttons("url", url, "url")
+        show_url_result(result, url, "url")
 
 with tab_perf:
     for task, title in (("url", "URL model"), ("text", "Message (SMS/email) model"), ("benchmark", "Benchmark: UCI Phishing Websites")):
