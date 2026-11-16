@@ -164,6 +164,8 @@ The dashboard is deployed on Streamlit Community Cloud at **https://ai-phishing-
 
 The hosted app loads the trained models committed in `models/`, so it never trains. Saved scikit-learn models only load reliably on the version that trained them (a 1.6.1 model fails on 1.9), so `app/requirements.txt` pins the exact versions used for training. If you retrain with different library versions, update those pins in the same commit. A free-tier app goes to sleep after a period without visitors; the first visit wakes it in under a minute.
 
+**One-click test links.** Add `?url=<link>` or `?msg=<message>` (URL-encoded) to the app's address and the scan runs as soon as the page opens, e.g. [this fake KYC link](https://ai-phishing-detector-app.streamlit.app/?url=http%3A%2F%2Fsbi-kyc-update.tk%2Flogin). After pushing changes to `phishguard/` code, reboot the app from the Streamlit dashboard so the new code loads.
+
 **Continuous integration.** `.github/workflows/tests.yml` runs the test suite on Python 3.9 and 3.12 on every push and pull request, and checks that the committed models load and give the expected verdicts.
 
 **Deploying the API.** The FastAPI service runs from the `Dockerfile` on any Docker host (for example Render, Railway or a VM): `docker build -t phishguard . && docker run -p 8000:8000 phishguard`.
