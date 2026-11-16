@@ -115,15 +115,17 @@ After training, `reports/` contains:
 
 Use the numbers from your own run. Don't copy figures from the papers in the literature review into the results slide.
 
-## Results from the first training run
+## Results
 
-These numbers come from a run on the real datasets in Claude's cloud workspace. XGBoost and imbalanced-learn weren't available there, so HistGradientBoosting and the built-in SMOTE were used. Your own run will regenerate `reports/` with XGBoost.
+These numbers come from training on a MacBook Air (Apple Silicon) with imbalanced-learn SMOTE. XGBoost could not load there because macOS lacks the `libomp` runtime, so scikit-learn's HistGradientBoosting stands in as the gradient-boosting model. After `brew install libomp`, rerun training to include XGBoost. All 21 tests pass on that machine.
 
-| Task | Data | Best model (by validation F1) | Accuracy | Precision | Recall | F1 | ROC-AUC |
+| Task | Test data | Selected model (by validation F1) | Accuracy | Precision | Recall | F1 | ROC-AUC |
 |---|---|---|---|---|---|---|---|
-| SMS scam detection | UCI SMS Spam, 5,574 msgs | Ensemble (LR + RF) | 0.992 | 0.993 | 0.946 | 0.969 | 0.996 |
-| Benchmark (30 features) | UCI Phishing Websites, 11,055 | Gradient boosting | 0.977 | 0.978 | 0.969 | 0.974 | 0.997 |
-| URL, registered domain only | PhiUSIIL, 171,307 unique domains | Ensemble (LR + NB) | 0.805 | 0.606 | 0.637 | 0.621 | 0.835 |
+| SMS scam detection | UCI SMS Spam, 1,115 test messages | Logistic Regression | 0.992 | 0.993 | 0.946 | 0.969 | 0.997 |
+| Benchmark (30 features) | UCI Phishing Websites, 2,211 test sites | RF + gradient-boosting ensemble | 0.977 | 0.980 | 0.966 | 0.973 | 0.998 |
+| URL, registered domain only | PhiUSIIL, 34,262 test domains | Ensemble (LR + NB) | 0.806 | 0.608 | 0.638 | 0.623 | 0.834 |
+
+The presentation in `docs/AI_Scam_Phishing_Detection_Final.pptx` is built from these numbers.
 
 How to present the URL row: it is low on purpose. It is the honest score once dataset bias is removed (see below). The same data scored on full URLs gives a much higher number, but that model flags Wikipedia and Gmail. In the running system, URLs go through three layers: a trusted-domain allowlist, the ML model for unknown domains, and the heuristic rules. A remaining weakness worth stating: small, unknown legitimate sites (a local cafe's website, a personal Netlify page) can still be flagged by the domain model, because the domain name alone carries limited signal. Page content, domain age (WHOIS) or reputation feeds would help, and they are good future-work points.
 

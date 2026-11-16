@@ -2,11 +2,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "▶ PhishGuard: setup, train and open dashboard",
+      "name": "▶ PhishGuard: setup, test and open dashboard",
       "type": "node-terminal",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "command": "( set -e; [ -d .venv ] || python3 -m venv .venv; ./.venv/bin/python -m pip install -q -r requirements.txt; [ -f models/url_model.joblib ] && [ -f models/text_model.joblib ] || ./.venv/bin/python -m phishguard.train all; ./.venv/bin/python -m streamlit run app/streamlit_app.py ) 2>&1 | tee run_log.txt; echo 'Finished - press any key'; read -n 1"
+      "command": "( set -e; [ -d .venv ] || python3 -m venv .venv; ./.venv/bin/python -m pip install -q -r requirements.txt; [ -f models/url_model.joblib ] && [ -f models/text_model.joblib ] || ./.venv/bin/python -m phishguard.train all; ./.venv/bin/python -m pytest -q -p no:cacheprovider || echo 'TESTS FAILED'; ./.venv/bin/python -m streamlit run app/streamlit_app.py ) 2>&1 | tee run_log.txt; echo 'Finished - press any key'; read -n 1"
     },
     {
       "name": "PhishGuard: retrain models",
