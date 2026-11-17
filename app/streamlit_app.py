@@ -9,85 +9,60 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+APP_DIR = Path(__file__).resolve().parent
+ROOT = APP_DIR.parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(APP_DIR))
 
-import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
 
+import ui  # noqa: E402
 from phishguard import predictor, store  # noqa: E402
 from phishguard.config import REPORTS_DIR  # noqa: E402
 
-st.set_page_config(page_title="PhishGuard", page_icon="🛡️", layout="wide")
-
-COLORS = {"phishing": "#c0392b", "suspicious": "#d68910", "safe": "#1e8449"}
-ICONS = {"phishing": "🚨", "suspicious": "⚠️", "safe": "✅"}
+st.set_page_config(page_title="PhishGuard · scam & phishing check", page_icon="◆", layout="wide")
 
 EXAMPLES = {
-    "SMS: fake KYC alert": "URGENT: Your SBI account will be blocked today. Complete KYC now at http://sbi-kyc-update.tk/login",
-    "SMS: prize scam": "Congratulations! You have won Rs 50,000 in our lucky draw. Claim now: bit.ly/claim-prize-now",
-    "SMS: normal message": "Hey, are we still meeting at the library at 4? I'll bring the notes.",
-    "Email: fake delivery": "Dear customer, your parcel could not be delivered. Pay the redelivery fee of Rs 25 at http://indiapost-redelivery.top/pay within 24 hours.",
+    "Choose an example…": "",
+    "SMS · fake KYC alert": "URGENT: Your SBI account will be blocked today. Complete KYC now at http://sbi-kyc-update.tk/login",
+    "SMS · prize scam": "Congratulations! You have won Rs 50,000 in our lucky draw. Claim now: bit.ly/claim-prize-now",
+    "SMS · normal message": "Hey, are we still meeting at the library at 4? I'll bring the notes.",
+    "Email · fake delivery": "Dear customer, your parcel could not be delivered. Pay the redelivery fee of Rs 25 at http://indiapost-redelivery.top/pay within 24 hours.",
 }
 
 
-def verdict_banner(result):
-    v, p = result["verdict"], result["probability"]
-    st.markdown(
-        f"<div style='padding:14px 18px;border-radius:10px;background:{COLORS[v]}22;border-left:6px solid {COLORS[v]}'>"
-        f"<span style='font-size:1.4rem;font-weight:700;color:{COLORS[v]}'>{ICONS[v]} {v.upper()}</span>"
-        f"<span style='float:right;font-size:1.1rem'>Risk score: <b>{p:.1%}</b></span></div>",
-        unsafe_allow_html=True,
-    )
+def html(markup: str):
+    st.markdown(markup, unsafe_allow_html=True)
 
 
-def show_reasons(component):
-    reasons = component.get("reasons") or []
-    if component["type"] == "url":
-        st.write(f"**Domain model** ({component['domain']}): {component['model_probability']:.1%} · "
-                 f"**Rules**: {component['rule_score']:.1%}")
-        for r in component.get("rules_fired", []):
-            st.markdown(f"- 🚩 {r['label']} (weight {r['weight']:.2f})")
-        st.caption("Domain signals the model weighed:")
-    if not reasons:
-        st.caption("No single feature stood out.")
-        return
-    if component["type"] == "url":
-        df = pd.DataFrame([{"Signal": r["label"], "Value": str(r["value"]), "Impact": r["impact"]} for r in reasons])
-    else:
-        df = pd.DataFrame([{"Word": r["token"], "Impact": r["impact"]} for r in reasons])
-    st.dataframe(df, hide_index=True)
-    st.caption(f"Positive impact pushes toward phishing, negative toward safe. Method: {reasons[0]['method']}.")
+def load_report(task):
+    p = REPORTS_DIR / f"{task}_metrics.json"
+    return json.loads(p.read_text()) if p.exists() else None
 
 
 def feedback_buttons(kind, text, key):
-    c1, c2 = st.columns(2)
-    if c1.button("Mark as phishing", key=f"fp_{key}"):
+    st.write("")
+    c1, c2, _ = st.columns([1, 1, 2])
+    if c1.button("Report as phishing", key=f"fp_{key}"):
         store.add_feedback(kind, text, True)
-        st.success("Saved. It will be used in the next retraining run.")
-    if c2.button("Mark as safe", key=f"fs_{key}"):
+        st.toast("Thanks. It will be used in the next retraining run.")
+    if c2.button("Report as safe", key=f"fs_{key}"):
         store.add_feedback(kind, text, False)
-        st.success("Saved. It will be used in the next retraining run.")
+        st.toast("Thanks. It will be used in the next retraining run.")
 
 
 def show_message_result(result, text, key):
-    verdict_banner(result)
-    st.write(f"**Triggered by:** {result['triggered_by']}")
-    for i, comp in enumerate(result["components"]):
-        title = "Message content" if comp["type"] == "text" else f"Link: {comp['input']}"
-        with st.expander(f"{ICONS[comp['verdict']]} {title} - {comp['probability']:.1%} ({comp['model']})", expanded=i == 0):
-            show_reasons(comp)
-    st.divider()
-    st.write("Was this verdict wrong?")
+    single = len(result["components"]) == 1
+    why = None if single else result["triggered_by"].split(": ", 1)[-1]
+    html(ui.verdict_card(result["verdict"], result["probability"], why))
+    for comp in result["components"]:
+        html(ui.component_card(comp))
     feedback_buttons("text", text, key)
 
 
 def show_url_result(result, url, key):
-    verdict_banner(result)
-    st.caption(f"Model: {result['model']}")
-    show_reasons(result)
-    st.divider()
-    st.write("Was this verdict wrong?")
+    html(ui.verdict_card(result["verdict"], result["probability"]))
+    html(ui.component_card(result))
     feedback_buttons("url", url, key)
 
 
@@ -96,32 +71,41 @@ def scan_from_link():
     link_url, link_msg = st.query_params.get("url"), st.query_params.get("msg")
     if not (link_url or link_msg):
         return
-    with st.container(border=True):
-        st.subheader("🔎 Scan from link")
-        logged = st.session_state.setdefault("logged_links", set())
-        if link_msg:
-            st.write("**Message:**")
-            st.info(link_msg)
-            result = predictor.scan(text=link_msg)
-            if ("msg", link_msg) not in logged:
-                store.log_scan("text", link_msg, result["probability"], result["verdict"])
-                logged.add(("msg", link_msg))
-            show_message_result(result, link_msg, "link_msg")
-        else:
-            st.write(f"**URL:** `{link_url}`")
-            result = predictor.scan_url(link_url)
-            if ("url", link_url) not in logged:
-                store.log_scan("url", link_url, result["probability"], result["verdict"])
-                logged.add(("url", link_url))
-            show_url_result(result, link_url, "link_url")
-        if st.button("Clear and scan something else"):
-            st.query_params.clear()
-            st.rerun()
+    logged = st.session_state.setdefault("logged_links", set())
+    html('<div class="pg-linkscan">Scan from a shared link</div>')
+    if link_msg:
+        html(f'<div class="pg-card"><div class="pg-kicker">Message</div>'
+             f'<div style="margin-top:.3rem">{ui.escape(link_msg)}</div></div>')
+        result = predictor.scan(text=link_msg)
+        if ("msg", link_msg) not in logged:
+            store.log_scan("text", link_msg, result["probability"], result["verdict"])
+            logged.add(("msg", link_msg))
+        show_message_result(result, link_msg, "link_msg")
+    else:
+        result = predictor.scan_url(link_url)
+        if ("url", link_url) not in logged:
+            store.log_scan("url", link_url, result["probability"], result["verdict"])
+            logged.add(("url", link_url))
+        show_url_result(result, link_url, "link_url")
+    if st.button("Clear and check something else"):
+        st.query_params.clear()
+        st.rerun()
+    st.write("")
 
 
 url_b, text_b = predictor.load_models()
-st.title("🛡️ PhishGuard")
-st.caption("AI-based scam and phishing detection for URLs, SMS and email")
+html(ui.CSS)
+html(ui.top_bar(url_b is not None and text_b is not None))
+
+text_r, bench_r = load_report("text"), load_report("benchmark")
+stats = [
+    (f"{text_r['final_model_test_metrics']['accuracy'] * 100:.1f}%" if text_r else "–", "SMS accuracy on held-out data"),
+    (f"{bench_r['final_model_test_metrics']['accuracy'] * 100:.1f}%" if bench_r else "–", "Benchmark website accuracy"),
+    ("12", "transparent rules for link tricks"),
+    ("< 1 s", "per check, with reasons"),
+]
+html(ui.hero(stats))
+
 if url_b is None or text_b is None:
     st.error("Models are not trained yet. Run `python scripts/download_data.py` and then "
              "`python -m phishguard.train all`, and reload this page.")
@@ -129,47 +113,37 @@ if url_b is None or text_b is None:
 
 scan_from_link()
 
-tab_msg, tab_url, tab_perf, tab_hist = st.tabs(["📩 Scan message", "🔗 Scan URL", "📊 Model performance", "🕑 History"])
+tab_msg, tab_url, tab_perf, tab_hist = st.tabs(["Check a message", "Check a link", "How it performs", "Recent checks"])
 
 with tab_msg:
-    choice = st.selectbox("Load an example (optional)", ["-"] + list(EXAMPLES))
-    text = st.text_area("Paste an SMS or email body", value=EXAMPLES.get(choice, ""), height=140)
-    if st.button("Scan message", type="primary") and text.strip():
+    choice = st.selectbox("Start from an example, or paste your own below", list(EXAMPLES))
+    text = st.text_area("SMS or email text", value=EXAMPLES[choice], height=130,
+                        placeholder="Paste the message exactly as you received it…")
+    if st.button("Check message", type="primary") and text.strip():
         result = predictor.scan(text=text)
         store.log_scan("text", text, result["probability"], result["verdict"])
         show_message_result(result, text, "msg")
 
 with tab_url:
-    url = st.text_input("URL to check", placeholder="http://secure-paypal-login.xyz/verify")
-    if st.button("Scan URL", type="primary") and url.strip():
+    url = st.text_input("Link", placeholder="http://secure-paypal-login.xyz/verify")
+    if st.button("Check link", type="primary") and url.strip():
         result = predictor.scan_url(url)
         store.log_scan("url", url, result["probability"], result["verdict"])
         show_url_result(result, url, "url")
 
 with tab_perf:
-    for task, title in (("url", "URL model"), ("text", "Message (SMS/email) model"), ("benchmark", "Benchmark: UCI Phishing Websites")):
-        p = REPORTS_DIR / f"{task}_metrics.json"
-        if not p.exists():
-            continue
-        r = json.loads(p.read_text())
-        f = r["final_model_test_metrics"]
-        st.subheader(title)
-        st.caption(f"Dataset: {r['dataset']} · {r['rows']:,} rows · Balancing: {r['balancing']} · "
-                   f"Selected by validation F1: {r['selected_model']}")
-        cols = st.columns(5)
-        for c, k in zip(cols, ["accuracy", "precision", "recall", "f1", "roc_auc"]):
-            c.metric(k.replace("_", "-").upper() if k == "roc_auc" else k.capitalize(), f"{f[k]:.4f}")
-        st.dataframe(pd.DataFrame(r["comparison"]).drop(columns=["val_f1"], errors="ignore"),
-                     hide_index=True)
-        img_cols = st.columns([3, 2])
-        for c, name in zip(img_cols, (f"{task}_comparison.png", f"{task}_confusion_matrix.png")):
-            if (REPORTS_DIR / name).exists():
-                c.image(str(REPORTS_DIR / name))
+    html('<div class="pg-sub" style="margin-top:.8rem">Every number below comes from data the models never saw '
+         'during training (a stratified 20% test split).</div>')
+    for task, title in (("text", "Messages: SMS and email"), ("url", "Links: domain model"),
+                        ("benchmark", "Benchmark: UCI Phishing Websites")):
+        r = load_report(task)
+        if r:
+            html(ui.perf_section(title, r))
 
 with tab_hist:
-    hist = store.recent_scans(100)
-    if hist.empty:
-        st.info("No scans yet.")
-    else:
-        st.dataframe(hist, hide_index=True)
-        st.bar_chart(hist["verdict"].value_counts())
+    hist = store.recent_scans(40)
+    html('<div class="pg-sec">Recent checks</div><div class="pg-sub" style="margin:0 0 .6rem">'
+         'Stored on this server for the retraining loop.</div>')
+    html(ui.history_rows(hist.to_dict(orient="records") if not hist.empty else []))
+
+html(ui.footer())
